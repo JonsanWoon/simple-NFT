@@ -1,0 +1,69 @@
+https://forum.openzeppelin.com/t/connecting-to-public-test-networks-with-truffle/2960
+https://forum.openzeppelin.com/t/create-an-nft-and-deploy-to-a-public-testnet-using-truffle/2961
+
+// Create file
+cd /var/www/vtProjectTEST/vtbackend/modules/mlmPlatform
+npm init -y
+npm install @openzeppelin/contracts@2.3.0
+npm install @alch/alchemy-web3 
+npm link winston
+cd nft
+npm i truffle
+npx truffle init
+vim secrects.json
+
+***************************
+{
+    "privateKey": "3dca60a6c0eedeedf6b7a70bc58e9f426c04f41a08da590d66322d4ead41269d",
+    "projectId": "9fd96f06b49e41fd9bec54f023ea49c5"
+}
+***************************
+npm install --save-dev @truffle/hdwallet-provider
+
+// create truffle-config.js file using  truffle-config.default.js 
+// Add inside truffle-config.js
+***************************
+const { projectId, mnemonic, privateKey } = require('./secrets.json');
+const HDWalletProvider = require('@truffle/hdwallet-provider');
+***************************
+
+// and  these under networks
+// need infura project id and private key
+**************************
+development: {
+   host: "127.0.0.1",     // Localhost (default: none)
+   port: 8545,            // Standard Ethereum port (default: none)
+   network_id: "*",       // Any network (default: none)
+ },
+ // Useful for deploying to a public network.
+ // NB: It's important to wrap the provider as a function.
+ ropsten: {
+   provider: () => new HDWalletProvider(privateKey, `wss://ropsten.infura.io/ws/v3/${projectId}`),
+   network_id: 3,       // Ropsten's id
+   gas: 5500000,        // Ropsten has a lower block limit than mainnet
+   confirmations: 2,    // # of confs to wait between deployments. (default: 0)
+   timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
+   skipDryRun: true     // Skip dry run before migrations? (default: false for public nets )
+ },
+************************** 
+
+npx truffle migrate --network mainnet
+
+// for public contract use
+npx truffle-flattener ./contracts/VTI.sol > ./VTI_flat.sol
+
+// add config.js  under nodeJS folder
+************************** 
+module.exports = {
+    ContractAddress:"0xFA81b62F9F58F7561D824541B0d21e30CaF8a12F",
+    FullHost:"https://ropsten.infura.io/v3/9fd96f06b49e41fd9bec54f023ea49c5",
+    fromAddressPrivateKey:"3dca60a6c0eedeedf6b7a70bc58e9f426c04f41a08da590d66322d4ead41269d",
+    ownerAddress:"0x5552B958005bd71012921cDD50ccBC0b55F7Afd2",
+    projectName: "tryNFT",
+    nftJsonURL: "http://vtmember.web/nft/"
+}
+************************** 
+
+// add Crontab
+# Mint Token Process
+* * * * * root /usr/bin/php /var/www/vtBackend/modules/mlmPlatform/process/processMintToken.php >> /var/www/vtBackend/modules/mlmPlatform/process/log/processMintToken.log 2>&1
